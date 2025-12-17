@@ -8,7 +8,7 @@ Analog circuit sizing is traditionally a manual, iterative process. This project
 ## Result: Optimization Convergence
 The AI successfully found the target current (1mA) within 15 iterations. Below is the error convergence plot:
 
-![Convergence Curve](convergence.png)
+![Convergence Curve](convergence_multi.png)
 
 ## Tech Stack
 - **PDK:** SkyWater 130nm (Sky130) via Volare
