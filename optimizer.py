@@ -8,7 +8,6 @@ def start_optimization(objective_func, w_range=(1.0, 100.0), iterations=20):
     """
     print(f"--- AI 啟動：尋找最佳尺寸 (範圍: {w_range}um) ---")
     
-    # gp_minimize 會嘗試最小化 objective_func 的回傳值
     res = gp_minimize(
         objective_func,                # 目標函數
         [w_range],                     # 參數範圍

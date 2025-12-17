@@ -13,13 +13,11 @@ def parse_dc_current(output_text):
     
     match = re.search(pattern, output_text)
     if match:
-        # 電流通常是流進 MOS，所以會是負值，我們取絕對值方便優化
         return abs(float(match.group(1)))
     else:
         return None
 
 if __name__ == "__main__":
-    # 測試程式碼
     test_text = "Doing analysis... i(vds) = -5.432100e-05  status = 0"
     result = parse_dc_current(test_text)
     print(f"測試解析結果: {result} A")
