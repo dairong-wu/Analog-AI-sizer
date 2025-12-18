@@ -22,7 +22,7 @@ def objective_function_sm(params):
 
     if current is None:
         error = 999
-        msg = f"❌ Simulation Failed for W={w_val:.2f}u"
+        msg = f"❌ Simulation Failed for W={w_val:.2f}u, L={l_val:.2f}u, NF={nf_val}"
     else:
         error = abs(TARGET_CURRENT - current)
         # 建立訊息字串
@@ -39,44 +39,30 @@ def objective_function_sm(params):
     #return error
 
 def objective_function_dp(params):
-    # 參數解包: W (um), L (um), R (kOhm)
     w_val, l_val, r_kohm = params
-    
-    # 將 R 轉回歐姆傳給 SPICE
     r_ohm = r_kohm * 1000 
     
-    # 1. 執行模擬
     raw_output = simulator.run_diff_pair(w_val, l_val, r_ohm)
-    
-    # 2. 解析結果
     res = parsers.parse_ac_results(raw_output)
     gain = res['gain']
     bw = res['bw']
     
-    # 如果模擬失敗 (NaN 或 None)
     if gain is None or bw is None:
+        msg = f"❌  Simulation Failed for W={w_val:.2f}u, L={l_val:.2f}u, R={r_kohm}"
+        print(msg)
+        if GUI_CALLBACK: GUI_CALLBACK(msg)
         return 999.0
     
-    # 3. 計算多目標 Cost (核心演算法)
-    # 我們希望 Gain >= Target，BW >= Target
-    # 使用相對誤差來平衡量級差異
-    
-    # Gain 誤差: 如果小於目標，懲罰很大；如果大於目標，獎勵 (誤差為0)
-    if gain < TARGET_GAIN:
-        err_gain = abs(TARGET_GAIN - gain) / TARGET_GAIN
-    else:
-        err_gain = 0 
-
-    # BW 誤差: 同理
-    if bw < TARGET_BW:
-        err_bw = abs(TARGET_BW - bw) / TARGET_BW
-    else:
-        err_bw = 0
-        
-    # 總誤差 = Gain誤差 + BW誤差 (權重 1:1)
+    # 計算 Cost (邏輯不變)
+    err_gain = abs(TARGET_GAIN - gain) / TARGET_GAIN if gain < TARGET_GAIN else 0 
+    err_bw = abs(TARGET_BW - bw) / TARGET_BW if bw < TARGET_BW else 0
     total_cost = err_gain + err_bw
     
-    print(f">> W={w_val:.2f}u, L={l_val:.2f}u, R={r_kohm:.2f}k | Gain={gain:.2f}dB, BW={bw/1e6:.2f}MHz | Cost={total_cost:.4f}")
+    # --- 修改點：將進度廣播給 GUI ---
+    msg = f">> W={w_val:.2f}u, L={l_val:.2f}u, R={r_kohm:.2f}k | Gain={gain:.2f}dB, BW={bw/1e6:.2f}MHz | Cost={total_cost:.4f}"
+    print(msg)
+    if GUI_CALLBACK:
+        GUI_CALLBACK(msg)
     
     return total_cost
 
@@ -118,32 +104,31 @@ def run_single_mos_opt(target_current, callback=None):
     if GUI_CALLBACK:
         GUI_CALLBACK(final_msg)
 
-def run_diff_pair_opt(target_gain, target_bw):
+def run_diff_pair_opt(target_gain, target_bw, callback=None): # 增加 callback 參數
+    global TARGET_GAIN, TARGET_BW, GUI_CALLBACK
+    TARGET_GAIN = target_gain
+    TARGET_BW = target_bw
+    GUI_CALLBACK = callback # 設定傳聲筒
+    
     print("=== Differential Pair Multi-Objective Optimizer ===")
-    print(f"🎯 目標: Gain >= {TARGET_GAIN}dB, BW >= {TARGET_BW/1e6}MHz")
+    if GUI_CALLBACK:
+        GUI_CALLBACK(f"🎯 Target: Gain >= {target_gain}dB, BW >= {target_bw/1e6}MHz")
     
-    # 搜尋空間
-    # W: 1u ~ 100u
-    # L: 0.15u ~ 2u
-    # R: 1k ~ 50k (負載電阻)
-    space = [
-        (1.0, 100.0), 
-        (0.15, 2.0),
-        (1.0, 50.0)
-    ]
+    space = [(1.0, 100.0), (0.15, 2.0), (1.0, 50.0)]
     
-    # 開始優化
     res = gp_minimize(objective_function_dp, space, n_calls=40, random_state=42)
     
-    print("\n=== 最終結果 ===")
-    print(f"最佳參數: W={res.x[0]:.2f}u, L={res.x[1]:.2f}u, R={res.x[2]:.2f}kOhm")
-    print(f"最小 Cost: {res.fun:.4f}")
-
     # 畫圖
     plt.figure()
     plot_convergence(res)
     plt.title("Multi-Objective Convergence (Gain + BW)")
     plt.savefig("convergence_diff_pair.png")
+    plt.close() # 記得關閉畫布節省記憶體
+
+    final_msg = f"🎯 AI Found: W={res.x[0]:.2f}u, L={res.x[1]:.2f}u, R={res.x[2]:.2f}k, Cost={res.fun:.4f}"
+    print(f"\n=== 最終結果 ===\n{final_msg}")
+    if GUI_CALLBACK:
+        GUI_CALLBACK(final_msg)
 
 if __name__ == "__main__":
     run_single_mos_opt(1e-3)

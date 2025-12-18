@@ -46,6 +46,25 @@ def run_diff_pair(w_val, l_val, r_val):
     result = subprocess.run(["ngspice", "-b", "work/run_diff.sp"], capture_output=True, text=True)
     return result.stdout
 
+def run_active_load(wn, ln, wp, lp):
+    lib_path = "/home/jeffy/.volare/volare/sky130/versions/0fe599b2afb6708d281543108caf8310912f54af/sky130A/libs.tech/combined/sky130.lib.spice"
+    
+    with open("templates/diff_pair_active_load_tb.sp", "r") as f:
+        content = f.read()
+    
+    content = content.replace("REPLACE_PDK_PATH", lib_path)
+    content = content.replace("REPLACE_WN", str(wn))
+    content = content.replace("REPLACE_LN", str(ln))
+    content = content.replace("REPLACE_WP", str(wp))
+    content = content.replace("REPLACE_LP", str(lp))
+    
+    with open("work/run_active.sp", "w") as f:
+        f.write(content)
+    
+    import subprocess
+    result = subprocess.run(["ngspice", "-b", "work/run_active.sp"], capture_output=True, text=True)
+    return result.stdout
+
 if __name__ == "__main__":
     print("🚀 啟動測試模擬...")
     output = run_simulation(5, 0.15)

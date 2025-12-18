@@ -40,7 +40,8 @@ class AnalogSizerApp(ctk.CTk):
         # 電路選擇按鈕 (使用 Segmented Button 看起來更現代)
         self.circuit_selector = ctk.CTkSegmentedButton(
             self.sidebar_frame,
-            values=["Single MOS", "Diff Pair", "Op-Amp"],
+            #values=["Single MOS", "Diff Pair", "Active Load", "Op-Amp"],
+            values=["Single MOS", "Diff Pair"],
             command=self.change_circuit_mode
         )
         self.circuit_selector.pack(padx=20, pady=10)
@@ -102,8 +103,10 @@ class AnalogSizerApp(ctk.CTk):
             self.setup_single_mos_ui()
         elif value == "Diff Pair":
             self.setup_diff_pair_ui()
-        elif value == "Op-Amp":
-            self.setup_opamp_ui()
+        #elif value == "Op-Amp":
+            #self.setup_opamp_ui()
+        #elif value == "Active Load": 
+            #self.setup_active_load_ui()
 
     # --- 介面建構函數 (Builders) ---
 
@@ -118,12 +121,16 @@ class AnalogSizerApp(ctk.CTk):
         self.add_input_field("Target Bandwidth (MHz):", "100.0")
         self.add_input_field("Load Resistance (kOhm):", "10.0")
 
-    def setup_opamp_ui(self):
-        """ 建立 Op-Amp 需要的輸入框 """
-        self.add_input_field("Open Loop Gain (dB):", "60.0")
-        self.add_input_field("Phase Margin (deg):", "60.0")
-        self.add_input_field("GBW (MHz):", "50.0")
-        ctk.CTkLabel(self.input_frame, text="⚠️ (Phase 3 Under Development)", text_color="orange").pack(pady=5, padx=10, anchor="w")
+    #def setup_active_load_ui(self):
+    #    self.add_input_field("Target Gain (dB):", "40.0") # 主動負載可以挑戰更高的 Gain
+    #    self.add_input_field("Target BW (MHz):", "50.0")
+
+    #def setup_opamp_ui(self):
+    #    """ 建立 Op-Amp 需要的輸入框 """
+    #    self.add_input_field("Open Loop Gain (dB):", "60.0")
+    #    self.add_input_field("Phase Margin (deg):", "60.0")
+    #    self.add_input_field("GBW (MHz):", "50.0")
+    #    ctk.CTkLabel(self.input_frame, text="⚠️ (Phase 3 Under Development)", text_color="orange").pack(pady=5, padx=10, anchor="w")
 
     def add_input_field(self, label_text, default_value):
         """ 輔助函數：快速產生 標籤+輸入框 """
@@ -155,18 +162,26 @@ class AnalogSizerApp(ctk.CTk):
         try:
             if mode == "Single MOS":
                 i_target = float(self.entries["Target Current (mA)"].get()) / 1000.0
-                
                 import main
                 main.run_single_mos_opt(i_target, callback=self.log_from_thread)
                 self.show_image("convergence_multi.png")
                 
             elif mode == "Diff Pair":
+                # 確保獲取正確的欄位名稱
                 gain = float(self.entries["Target Gain (dB)"].get())
                 bw = float(self.entries["Target Bandwidth (MHz)"].get()) * 1e6
                 
                 import main
+                # 呼叫已經修改好的 run_diff_pair_opt
                 main.run_diff_pair_opt(gain, bw, callback=self.log_from_thread)
                 self.show_image("convergence_diff_pair.png")
+            elif mode == "Active Load":
+                gain = float(self.entries["Target Gain (dB)"].get())
+                bw = float(self.entries["Target BW (MHz)"].get()) * 1e6
+                import main
+                main.run_active_load_opt(gain, bw, callback=self.log_from_thread)
+                self.show_image("convergence_active.png")
+                
         except Exception as e:
             self.log(f"Error: {str(e)}")
             import traceback
@@ -202,11 +217,6 @@ class AnalogSizerApp(ctk.CTk):
             self.log(f"❌ Error: {str(e)}")
 
         self.run_btn.configure(state="normal", text="🚀 Start Optimization")'''
-
-    def log(self, message):
-        """ 安全地更新 UI Log """
-        self.log_box.insert("end", message + "\n")
-        self.log_box.see("end")
 
     def show_image(self, img_path):
         """ 載入並顯示圖片 """
