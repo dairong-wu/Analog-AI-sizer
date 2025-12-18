@@ -1,35 +1,57 @@
-# Analog-AI-Sizer 
+# Analog-AI-Sizer 🚀
 
-An automated analog circuit sizing framework integrating **AI (Bayesian Optimization)** with the **Open-Source Sky130 PDK**.
+An automated analog circuit sizing framework integrating **AI (Bayesian Optimization)** with the **Open-Source Sky130 PDK**. This tool provides a professional **GUI interface** to streamline the analog design flow.
 
-## Overview
-Analog circuit sizing is traditionally a manual, iterative process. This project leverages **Machine Learning** to explore the design space and find optimal transistor dimensions ($W/L$) to meet specific performance targets (Specs).
+## 📖 Overview
+Analog circuit sizing is traditionally a manual, iterative process. This project leverages **Machine Learning** to explore the design space and find optimal transistor dimensions ($W, L, nf$) to meet specific performance targets (Specs).
 
-## Result: Optimization Convergence
-The AI successfully found the target current (1mA) within 15 iterations. Below is the error convergence plot:
+## 🛠 Features (Currently Available)
 
-![Convergence Curve](convergence_multi.png)
+### 1. Single MOSFET Optimizer
+- **Target:** Precise Drain Current ($I_d$) matching.
+- **Parameters:** Optimizes $W$, $L$, and $nf$ (Number of Fingers).
+- **Status:** ✅ Fully Functional.
 
-## Tech Stack
+### 2. Differential Pair Optimizer (Passive Load)
+- **Circuit:** Differential pair with resistive load.
+- **Target:** Optimize for **Gain (Av)** and **Bandwidth (BW)** simultaneously.
+- **AI Task:** Multi-objective optimization using weighted cost functions.
+- **Status:** ✅ Fully Functional.
+
+### 3. Modern GUI Interface
+- Built with **CustomTkinter** for a professional EDA tool experience.
+- Real-time log synchronization between the AI engine and UI.
+- Automated convergence plot visualization.
+
+## 📊 Result: Optimization Convergence
+The AI successfully explores the high-dimensional design space. Below is the error convergence plot:
+
+![Convergence Curve for Single Mos](convergence_multi.png)
+![Convergence Curve for Diff Pair](convergence_diff_pair.png)
+
+## 🏗 Tech Stack
 - **PDK:** SkyWater 130nm (Sky130) via Volare
 - **Simulator:** Ngspice
 - **AI Engine:** Scikit-optimize (Bayesian Optimization)
-- **Environment:** Python 3.12 / WSL2 Ubuntu
+- **GUI:** CustomTkinter / Pillow
 
-## Future Development Roadmap (Phase 2 & 3)
+> ⚠️ **Note on Model Library:** Users must manually update the `lib_path` in `simulator.py` to point to their local Sky130 PDK `.lib.spice` file.
 
-### 1. Multi-Objective Optimization (MOS Differential Pair)
-- **Goal:** Optimize a Differential Pair to achieve target **Gain (Av)** and **Bandwidth (BW)** simultaneously.
-- **AI Task:** Use weighted cost functions to balance trade-offs between speed, power, and gain.
+## 🛤 Future Development Roadmap
 
-### 2. Automated PVT Corner Analysis
-- **Goal:** Ensure the design is robust across **Process**, **Voltage**, and **Temperature** variations (e.g., -40°C to 125°C).
-- **Benefit:** Mimics real-world industrial reliability testing (Essential for Automotive/Industrial ICs).
+### 1. Active Load Support
+- Transition from resistive loads to **Active Current Mirror loads** for significantly higher gain.
 
-### 3. Layout-Aware Optimization (Closing the Loop)
-- **Goal:** Integrate with **KLayout** to include parasitic extraction (PEX) effects back into the AI loop.
-- **Vision:** Achieving "Layout-Ready" sizing by predicting parasitic capacitance/resistance during the optimization phase.
+### 2. Automated PVT Corner Analysis (Phase 2)
+- Ensure design robustness across **Process**, **Voltage**, and **Temperature** (-40°C to 125°C).
 
-## How to Run
-1. `pip install -r requirements.txt`
-2. `python3 main.py`
+### 3. Operational Amplifier (Op-Amp) Design (Phase 3)
+- Full Two-stage Miller Compensation Op-Amp optimization.
+
+### 4. Layout-Aware Optimization
+- Integration with **KLayout** for PEX (Parasitic Extraction) back-annotation.
+
+## 🚀 How to Run
+1. Ensure Ngspice and Volare (Sky130) are installed.
+2. `pip install -r requirements.txt`
+3. `python3 gui_app.py`
